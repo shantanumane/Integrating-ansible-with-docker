@@ -1,0 +1,82 @@
+- name: install docker
+  hosts: group
+  tasks:
+    - name: addbase-os
+      yum_repository: 
+          name: dvd2
+          description: Local_baseos
+          baseurl: file:///dvd/BaseOS
+          gpgcheck: no
+
+    - name: Appstream
+      yum_repository: 
+          name: dvd1
+          description: Local_appstream
+          baseurl: file:///dvd/AppStream
+          gpgcheck: no
+  
+    - name: upgradde all 
+      command: yum clean metadata
+      args: 
+         warn: no
+
+    - name: yum clean
+      yum:
+          name: yum-utils
+          state: latest
+
+    - name: docker repo add
+      yum_repository:
+          name: docker
+          description: docker-ce
+          baseurl: https://download.docker.com/linux/centos/7/x86_64/stable/
+          gpgcheck: 0
+
+    - name: installing docker
+      package: 
+          name: "docker-ce-18.06.3.ce-3.el7.x86_64"
+          state: present
+   
+    - command: pip3 install docker
+   
+    - name: start service
+      service:
+          name: docker
+          state: started
+          enabled: yes
+   
+    - name : pull httpd image
+      docker_image:
+          name: httpd
+          tag: latest
+          source: pull
+
+    - name: creating persistant storage
+      file:
+          path: "/ps"
+          state: directory
+    
+    - name: copy code
+      copy:
+          src: "shantanu.html"
+          dest: "/ps/"
+
+    - name: container run
+      docker_container:
+          name: webserver
+          image: "httpd"
+          state: started
+          exposed_ports:
+             - "80"
+          ports:
+             - "8888:80"
+          volumes:
+             - /ps:/usr/local/apache2/htdocs/
+   
+          
+
+
+
+
+
+
